@@ -4,3 +4,4 @@ build
 config*.org
 *.deb
 *.ddeb
+.DS_Store
