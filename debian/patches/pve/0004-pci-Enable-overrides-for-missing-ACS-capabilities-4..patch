@@ -1,13 +1,15 @@
-From 1e30ab2525d8a9ad1fe9a76bef64ff54c2d95e0d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mark Weiman <mark.weiman@markzz.com>
-Date: Sun, 12 Aug 2018 11:36:21 -0400
-Subject: [PATCH 09/14] pci: Enable overrides for missing ACS capabilities
+Date: Wed, 7 Feb 2018 16:04:03 -0500
+Subject: [PATCH] pci: Enable overrides for missing ACS capabilities (4.15)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 This an updated version of Alex Williamson's patch from:
 https://lkml.org/lkml/2013/5/30/513
 
 Original commit message follows:
-
 PCIe ACS (Access Control Services) is the PCIe 2.0+ feature that
 allows us to control whether transactions are allowed to be redirected
 in various subnodes of a PCIe topology.  For instance, if two
@@ -45,27 +47,27 @@ specific devices which enforce isolation but not provide an ACS
 capability.  Please contact me to have your devices added and save
 your customers the hassle of this boot option.
 
-Signed-off-by: Mark Weiman <mark.weiman@markzz.com>
-Signed-off-by: Alexandre Frade <admfrade@gmail.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  .../admin-guide/kernel-parameters.txt         |   9 ++
- drivers/pci/quirks.c                          | 101 ++++++++++++++++++
- 2 files changed, 110 insertions(+)
+ drivers/pci/quirks.c                          | 102 ++++++++++++++++++
+ 2 files changed, 111 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 8dee8f68fe15..8aa1f5c6c042 100644
+index 3470cb524222..3c9192618839 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -3402,6 +3402,15 @@
- 		nomsi		[MSI] If the PCI_MSI kernel config parameter is
- 				enabled, this kernel boot option can be used to
- 				disable the use of MSI interrupts system-wide.
-+		pcie_acs_override =
-+					[PCIE] Override missing PCIe ACS support for:
+@@ -4399,6 +4399,15 @@
+ 				Also, it enforces the PCI Local Bus spec
+ 				rule that those bits should be 0 in system reset
+ 				events (useful for kexec/kdump cases).
++		pci_acs_override =
++				[PCIE] Override missing PCIe ACS support for:
 +				downstream
 +					All downstream ports - full ACS capabilities
 +				multifunction
-+					All multifunction devices - multifunction ACS subset
++					Add multifunction devices - multifunction ACS subset
 +				id:nnnn:nnnn
 +					Specific device - full ACS capabilities
 +					Specified as vid:did (vendor/device ID) in hex
@@ -73,12 +75,12 @@ index 8dee8f68fe15..8aa1f5c6c042 100644
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 320255e5e8f8..8d5808de9071 100644
+index ce469d84ebae..4f163ef55e7b 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
-@@ -3483,6 +3483,106 @@ static void quirk_no_bus_reset(struct pci_dev *dev)
- 	dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
+@@ -287,6 +287,106 @@ static int __init pci_apply_final_quirks(void)
  }
+ fs_initcall_sync(pci_apply_final_quirks);
  
 +static bool acs_on_downstream;
 +static bool acs_on_multifunction;
@@ -120,7 +122,6 @@ index 320255e5e8f8..8d5808de9071 100644
 +				goto next;
 +			}
 +			acs_on_ids[max_acs_id].vendor = val;
-+
 +			p += strcspn(p, ":");
 +			if (*p != ':') {
 +				pr_warn("PCIe ACS invalid ID\n");
@@ -165,32 +166,31 @@ index 320255e5e8f8..8d5808de9071 100644
 +				return 1;
 +
 +	switch (pci_pcie_type(dev)) {
-+	case PCI_EXP_TYPE_DOWNSTREAM:
-+	case PCI_EXP_TYPE_ROOT_PORT:
-+		if (acs_on_downstream)
-+			return 1;
-+		break;
-+	case PCI_EXP_TYPE_ENDPOINT:
-+	case PCI_EXP_TYPE_UPSTREAM:
-+	case PCI_EXP_TYPE_LEG_END:
-+	case PCI_EXP_TYPE_RC_END:
-+		if (acs_on_multifunction && dev->multifunction)
-+			return 1;
++		case PCI_EXP_TYPE_DOWNSTREAM:
++		case PCI_EXP_TYPE_ROOT_PORT:
++			if (acs_on_downstream)
++				return 1;
++			break;
++		case PCI_EXP_TYPE_ENDPOINT:
++		case PCI_EXP_TYPE_UPSTREAM:
++		case PCI_EXP_TYPE_LEG_END:
++		case PCI_EXP_TYPE_RC_END:
++			if (acs_on_multifunction && dev->multifunction)
++				return 1;
 +	}
 +
 +	return -ENOTTY;
 +}
++
  /*
-  * Some Atheros AR9xxx and QCA988x chips do not behave after a bus reset.
-  * The device will throw a Link Down error on AER-capable systems and
-@@ -4796,6 +4896,8 @@ static const struct pci_dev_acs_enabled {
-	{ PCI_VENDOR_ID_ZHAOXIN, 0x9083, pci_quirk_mf_endpoint_acs },
-	/* Zhaoxin Root/Downstream Ports */
-	{ PCI_VENDOR_ID_ZHAOXIN, PCI_ANY_ID, pci_quirk_zhaoxin_pcie_ports_acs },
-+	/* PCIe ACS overrides */
+  * Decoding should be disabled for a PCI device during BAR sizing to avoid
+  * conflict. But doing so may cause problems on host bridge and perhaps other
+@@ -5100,6 +5200,8 @@ static const struct pci_dev_acs_enabled {
+ 	{ PCI_VENDOR_ID_CAVIUM, 0xA060, pci_quirk_mf_endpoint_acs },
+ 	/* APM X-Gene */
+ 	{ PCI_VENDOR_ID_AMCC, 0xE004, pci_quirk_xgene_acs },
++	/* Enable overrides for missing ACS capabilities */
 +	{ PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
- 	{ 0 }
- };
- 
--- 
-2.17.1
+ 	/* Ampere Computing */
+ 	{ PCI_VENDOR_ID_AMPERE, 0xE005, pci_quirk_xgene_acs },
+ 	{ PCI_VENDOR_ID_AMPERE, 0xE006, pci_quirk_xgene_acs },
