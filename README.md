@@ -1,20 +1,4 @@
-# Proxmox Edge kernels
-Custom Linux kernels for Proxmox VE arm64
 
-#### Available Versions
-1. Linux 6.2 ->branch:v6.2
-2. Linux 6.1 -> master
-3. Linux 5.15 -> branch:v5.15
-
-## Installation
-add arm64 kernel repo.
-
-```sh
-echo "deb https://mirrors.apqa.cn/proxmox/debian/kernel sid port" > /etc/apt/sources.list.d/pve-arm64-kernel.list
-apt update
-apt search pve-kernel
-apt install pve-kernel-xxxx
-```
 
 ## Building manually
 You may also choose to manually build one of these kernels yourself.
@@ -30,8 +14,8 @@ apt install devscripts debhelper equivs git
 #### Obtaining the source
 Obtain the source code as follows:
 ```bash
-git https://github.com/jiangcuo/pve-arm64-kernel
-cd pve-arm64-kernel
+git https://github.com/jiangcuo/port-kernel
+cd port-kernel
 ```
 Then, select the branch of your likings (e.g. `v6.1`) and update the submodules:
 ```bash
