@@ -1,5 +1,5 @@
-pve-kernel (5.10.0) openeuler-1; urgency=medium
+DLC-kernel (5.10.0) olk; urgency=medium
 
   * init
 
- -- Jiangcuo <jiangcuo@bingsin.com>  Thu, 29 Feb 2024 02:39:46 +0100
+ -- DLC-admin <admin@dlc.com>  Fri, 26 Jul 2024 14:15:46 +0100
