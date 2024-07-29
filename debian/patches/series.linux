@@ -1,15 +1,2 @@
 pve/0001-Make-mkcompile_h-accept-an-alternate-timestamp-strin.patch
-pve/0002-wireless-Add-Debian-wireless-regdb-certificates.patch
 pve/0003-bridge-keep-MAC-of-first-assigned-port.patch
-pve/0004-pci-Enable-overrides-for-missing-ACS-capabilities-4..patch
-pve/0005-kvm-disable-default-dynamic-halt-polling-growth.patch
-pve/0006-net-core-downgrade-unregister_netdevice-refcount-lea.patch
-pve/0007-Revert-fortify-Do-not-cast-to-unsigned-char.patch
-pve/0008-kvm-xsave-set-mask-out-PKRU-bit-in-xfeatures-if-vCPU.patch
-pve/0009-allow-opt-in-to-allow-pass-through-on-broken-hardwar.patch
-pve/0010-KVM-nSVM-Advertise-support-for-flush-by-ASID.patch
-pve/0011-revert-memfd-improve-userspace-warnings-for-missing-.patch
-pve/0012-apparmor-expect-msg_namelen-0-for-recvmsg-calls.patch
-pve/0013-x86-CPU-AMD-Improve-the-erratum-1386-workaround.patch
-pve/0014-net-usb-ax88179_178a-avoid-the-interface-always-conf.patch
-pve/0015-SUNRPC-Fix-a-slow-server-side-memory-leak-with-RPC-o.patch

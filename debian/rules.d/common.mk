@@ -14,7 +14,7 @@ PVE_KERNEL_CC ?= ${CC}
 PVE_ZFS_CC ?= ${CC}
 
 ### Debian package names
-EXTRAVERSION=-edge
+EXTRAVERSION=-dlc
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
